@@ -1,0 +1,37 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-pipe",
+      "-I.",
+      "-Isrc/include",
+      "-std=gnu11",
+      "-ffreestanding",
+      "-fno-stack-protector",
+      "-fno-stack-check",
+      "-fno-pie",
+      "-fno-pic",
+      "-m64",
+      "-masm=intel",
+      "-march=x86-64",
+      "-mabi=sysv",
+      "-mno-80387",
+      "-mno-mmx",
+      "-mno-sse",
+      "-mno-sse2",
+      "-mno-red-zone",
+      "-mcmodel=kernel",
+      "-c",
+      "-o",
+      "src/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/rtw/projects/maya/kernel",
+    "file": "/home/rtw/projects/maya/kernel/src/main.c",
+    "output": "/home/rtw/projects/maya/kernel/src/main.o"
+  }
+]
