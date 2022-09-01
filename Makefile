@@ -7,7 +7,7 @@ all: $(OUT)
 run:
 	qemu-system-x86_64 -M q35 -m 2G -enable-kvm -serial stdio -cpu host -hda $(OUT) -smp 1
 
-run-uefi:
+run-uefi: ovmf-x64
 	qemu-system-x86_64 -M q35 -m 3G -enable-kvm -serial stdio -cpu host -bios ovmf-x64/OVMF.fd -hda $(OUT) -smp 1
 
 
