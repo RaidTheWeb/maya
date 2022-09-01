@@ -46,4 +46,4 @@ $(OUT): limine kernel
 .PHONY: clean
 clean:
 	rm -rf $(OUT)
-	make -C $(OUT) clean
+	make -C kernel clean
