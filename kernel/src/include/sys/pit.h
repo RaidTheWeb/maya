@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define PIT_DIVEND = 1193182
+#define PIT_DIVEND 1193180
 
 uint16_t pit_curcount(void);
 void pit_setreload(uint16_t count);

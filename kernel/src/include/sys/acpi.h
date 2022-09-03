@@ -30,7 +30,7 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     sdt_t header;
-    uint8_t start;
+    char data[];
 } rsdt_t;
 
 extern rsdp_t *acpi_rsdp;

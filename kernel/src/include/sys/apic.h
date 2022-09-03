@@ -3,12 +3,14 @@
 
 #include <cpu/cpu.h>
 
+#define LAPIC_REGID 0x020
+#define LAPIC_REGEOI 0x0b0
+#define LAPIC_REGSPUR 0xf0
 #define LAPIC_REGICR0 0x300
 #define LAPIC_REGICR1 0x310
-#define LAPIC_REGSPUR 0x0f0
-#define LAPIC_EOI 0x0b0
 #define LAPIC_REGLVTTIMER 0x320
 #define LAPIC_REGTIMERINIT 0x380
+#define LAPIC_REGTIMERCUR 0x390
 #define LAPIC_REGTIMERDIV 0x3e0
 
 extern uint64_t lapic_base;

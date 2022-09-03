@@ -2,6 +2,7 @@
 #define __CPU__CPU_H__
 
 #include <stdint.h>
+#include <lib/list.h>
 
 typedef struct {
     uint64_t ds; // Data segment
@@ -57,8 +58,54 @@ typedef struct {
     void (*timerfunc)(uint8_t, cpustate_t *);
 } cpulocal_t;
 
+extern LIST_TYPE(cpulocal_t *) cpulocals;
+
 cpulocal_t *cpu_current(void);
 void cpu_init(void);
+
+static inline uint64_t cpu_readcr2(void) {
+    uint64_t ret = 0;
+    asm volatile (
+        "mov %0, cr2"
+        : "=r" (ret)
+        : : "memory"
+    );
+    return ret;
+}
+
+static inline void cpu_writecr2(uint64_t val) {
+    asm volatile (
+        "mov cr2, %0"
+        : : "r" (val)
+        : "memory"
+    );
+}
+
+static inline uint64_t cpu_readcr3(void) {
+    uint64_t ret = 0;
+    asm volatile (
+        "mov %0, cr3"
+        : "=r" (ret)
+        : : "memory"
+    );
+    return ret;
+}
+
+static inline void cpu_writecr3(uint64_t val) {
+    asm volatile (
+        "mov cr3, %0"
+        : : "r" (val)
+        : "memory"
+    );
+}
+
+static inline void cpu_invlpg(uint64_t val) {
+    asm volatile (
+        "invlpg [%0]"
+        : : "r" (val)
+        : "memory"
+    );
+}
 
 static inline void cpu_enableints(void) {
     asm("sti");

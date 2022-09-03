@@ -22,10 +22,6 @@ SECTIONS
 
     PROVIDE(symboltable = 1); /* define symboltable to prevent giving us errors during initial compilation */
 
-    .stivale2hdr : {
-        KEEP(*(.stivale2hdr))
-    } :rodata
-
     .rodata : {
         *(.rodata .rodata.*)
     } :rodata
@@ -41,5 +37,10 @@ SECTIONS
         *(.bss .bss.*)
     } :data
 
-    kernelendaddr = .;
+    kernelendaddr = .; /* define a symbol for the very end of the output so we know the end of the kernel (could probably replace this with a kernel file request calculation) */
+
+    /DISCARD/ : {
+        *(.eh_frame)
+        *(.note .note.*)
+    }
 }

@@ -9,7 +9,7 @@ typedef struct __attribute__((packed)) {
     sdt_t header;
     uint32_t localconaddr;
     uint32_t flags;
-    uint8_t begin;
+    char data[];
 } madt_t;
 
 typedef struct __attribute__((packed)) {
