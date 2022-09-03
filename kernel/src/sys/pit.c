@@ -26,7 +26,7 @@ void pit_setfreq(uint64_t freq) {
 }
 
 static void pit_handler(uint32_t num, cpulocal_t *state) {
-    printf("perhaps a pit\n");
+    // printf("perhaps a pit\n");
     // timer handler
     lapic_eoi();
 }

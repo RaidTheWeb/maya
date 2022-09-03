@@ -119,7 +119,7 @@ void idt_reload(void) {
         : : "m"  (idtptr)
         : "memory"
     );
-    printf("[idt]: IDT reloaded\n");
+    // printf("[idt]: IDT reloaded\n");
 }
 
 void idt_init(void) {

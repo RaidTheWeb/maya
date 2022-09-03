@@ -139,5 +139,29 @@ void gdt_reload(void) {
         : "memory"
     );
 
-    printf("[gdt]: GDT reloaded\n");
+}
+
+void gdt_loadtss(tss_t *tss) {
+    spinlock_acquire(&gdt_lock); // acquire the lock as this is a function that will be called by multiple CPUs
+
+    gdt.entries[9] = (gdtentry_t) {
+        .limit = 103,
+        .baselow16 = (uint16_t)((uint64_t)tss),
+        .basemid8 = (uint8_t)((uint64_t)tss >> 16),
+        .basehigh8 = (uint8_t)((uint64_t)tss >> 24),
+        .access = 0x89,
+        .granularity = 0x00
+    };
+
+    // upper bounds of the TSS entry
+    gdt.entries[10] = (gdtentry_t) {
+        .limit = (uint16_t)((uint64_t)tss >> 32),
+        .baselow16 = (uint16_t)((uint64_t)tss >> 48)
+    };
+
+    asm volatile ("ltr %0" : : "rm" ((uint16_t)0x48) : "memory");
+
+    printf("[gdt]: TSS loaded\n");
+
+    spinlock_release(&gdt_lock);
 }

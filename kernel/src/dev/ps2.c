@@ -27,8 +27,10 @@ void ps2_writecfg(uint8_t val) {
 }
 
 static void ps2_handler(uint32_t vec, cpustate_t *state) {
-    printf("ps2 interrupt\n");
+    printf("ps2 interrupt on %d\n", ((cpulocal_t *)cpu_getgsbase())->cpunum);
     lapic_eoi();
+    uint8_t scancode = inb(0x60);
+    printf("0x%08x ", scancode);
 }
 
 void ps2_init(void) {

@@ -47,11 +47,12 @@ typedef struct __attribute__((packed)) {
     uint32_t iopb;
 } tss_t;
 
+// cpu local will contain references to current processes, threads, etc. (might be better to seperate them though and timeshare that way)
+
 typedef struct {
-    int num;
-    int bsp;
+    // gs:0
+    uint64_t cpunum;  
     int active;
-    int lastrunqueueidx;
     uint32_t lapicid;
     uint32_t lapicfreq;
     tss_t tss;
@@ -99,6 +100,51 @@ static inline void cpu_writecr3(uint64_t val) {
     );
 }
 
+static inline uint64_t rdmsr(uint32_t msr) {
+    uint32_t edx = 0, eax = 0;
+    asm volatile (
+        "rdmsr"
+        : "=a" (eax), "=d" (edx)
+        : "c" (msr)
+        : "memory"
+    );
+    return ((uint64_t)edx << 32) | eax;
+}
+
+static inline uint64_t wrmsr(uint32_t msr, uint64_t val) {
+    uint32_t eax = (uint32_t)val, edx = (uint32_t)(val >> 32);
+    asm volatile (
+        "wrmsr"
+        : : "a" (eax), "d" (edx), "c" (msr)
+        : "memory"
+    );
+    return ((uint64_t)edx << 32) | eax;
+}
+
+static inline void cpu_setkerngsbase(void *addr) {
+    wrmsr(0xc0000102, (uint64_t)addr);
+}
+
+static inline void cpu_setgsbase(void *addr) {
+    wrmsr(0xc0000101, (uint64_t)addr);
+}
+
+static inline void cpu_setfsbase(void *addr) {
+    wrmsr(0xc0000100, (uint64_t)addr);
+}
+
+static inline void *cpu_getkerngsbase(void) {
+    return (void *)rdmsr(0xc0000102);
+}
+
+static inline void *cpu_getgsbase(void) {
+    return (void *)rdmsr(0xc0000101);
+}
+
+static inline void *get_fs_base(void) {
+    return (void *)rdmsr(0xc0000100);
+}
+
 static inline void cpu_invlpg(uint64_t val) {
     asm volatile (
         "invlpg [%0]"
@@ -117,7 +163,7 @@ static inline void cpu_disableints(void) {
 
 static inline int cpu_intstate(void) {
     uint64_t f;
-    asm volatile ( "pushfq\npop %0" : "=rm" (f) );
+    asm volatile ( "pushfq\npop %0" : "=rm" (f) ); // push flags onto stack and pop off into flags variable
     return f & (1 << 9); // grab the interrupt state flag
 }
 
@@ -147,5 +193,10 @@ static inline int cpu_toggleint(int state) {
     else cpu_disableints();
     return ret;
 }
+
+extern uint64_t fpu_storesize;
+// for changing between xsave and (legacy) fxsave
+extern void (*fpu_save)(void *);
+extern void (*fpu_restore)(void *);
 
 #endif

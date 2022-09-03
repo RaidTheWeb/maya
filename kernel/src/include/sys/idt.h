@@ -23,6 +23,7 @@ void idt_updateist(uint8_t vec, uint8_t flags);
 void idt_updateflags(uint8_t vec, uint8_t flags);
 
 void idt_init(void);
+void idt_reload(void);
 uint8_t idt_allocvec(void);
 
 #endif

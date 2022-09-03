@@ -86,7 +86,7 @@ void _start(void) {
  
     acpi_init(rsdpreq.response);
 
-    // smp_init();
+    smp_init(smpreq.response); 
 
     time_init(bootreq.response);
 
