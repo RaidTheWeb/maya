@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #include <dev/ps2.h>
 #include <sys/pit.h>
+#include <cpu/smp.h>
 
 static volatile struct limine_terminal_request termreq = {
     .id = LIMINE_TERMINAL_REQUEST,
@@ -57,6 +58,11 @@ uint64_t HIGHER_HALF = 0;
 
 void termprint(const char *string, uint64_t len) {
     termreq.response->write(termreq.response->terminals[0], string, len);
+}
+
+static void ap_entry(struct limine_smp_info *info) {
+    printf("woah\n");
+    while(1) asm("pause");
 }
 
 void _start(void) {

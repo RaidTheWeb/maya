@@ -10,7 +10,7 @@
 
 #define CPUSTACK 0x10000
 
-static uint64_t cpucount = 0;
+uint64_t cpucount = 0;
 
 void smp_initcpu(struct limine_smp_info *info) {
     cpulocal_t *local = (cpulocal_t *)info->extra_argument;
@@ -39,6 +39,8 @@ void smp_initcpu(struct limine_smp_info *info) {
         for(;;) asm("hlt");
     }
     local->tss.ist1 = (uint64_t)((void *)schedstackphys + CPUSTACK + HIGHER_HALF);
+
+    // initialise features
 
     cpu_toggleint(1); // enable interrupts on this CPU
     printf("[smp]: Processor #%d online\n", cpunum);
