@@ -94,7 +94,7 @@ void gdt_init(void) {
         .basehigh8 = 0
     };
 
-    gdt.entries[7] = (gdtentry_t) { // user 64 code
+    gdt.entries[7] = (gdtentry_t) { // user 64 data
         .limit = 0,
         .baselow16 = 0,
         .basemid8 = 0,
@@ -103,7 +103,7 @@ void gdt_init(void) {
         .basehigh8 = 0
     };
 
-    gdt.entries[8] = (gdtentry_t) { // user 64 data
+    gdt.entries[8] = (gdtentry_t) { // user 64 code
         .limit = 0,
         .baselow16 = 0,
         .basemid8 = 0,

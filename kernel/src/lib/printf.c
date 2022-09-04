@@ -35,20 +35,20 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <serial.h>
+#include <mm/mm.h>
+#include <mm/vmm.h>
 
 void termprint(const char *str, uint64_t len);
 
 static void _putchar(char character) {
-    // uint64_t *currentcr3 = (uint64_t *)READ_CR3();
-    // if(vmm_initialised && currentcr3 != kernelpagemap->top) vmm_switchto(kernelpagemap);
-    // // print lock
 #ifndef HARDWARE
+    uint64_t cr3 = cpu_readcr3();
+    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top - HIGHER_HALF) vmm_switchto(kernelpagemap); 
     termprint(&character, 1);
+    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top - HIGHER_HALF) {
+        cpu_writecr3(cr3);
+    }
 #endif
-    // // release lock
-    // if(vmm_initialised && currentcr3 != kernelpagemap->top) {
-    //     WRITE_CR3((uint64_t)currentcr3);
-    // }
     serial_out(character);
 }
 

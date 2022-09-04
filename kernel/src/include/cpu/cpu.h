@@ -50,19 +50,53 @@ typedef struct __attribute__((packed)) {
 // cpu local will contain references to current processes, threads, etc. (might be better to seperate them though and timeshare that way)
 
 typedef struct {
-    // gs:0
-    uint64_t cpunum;  
+    int cpunum;
     int active;
+    int lastrunqueue;
     uint32_t lapicid;
     uint32_t lapicfreq;
     tss_t tss;
-    void (*timerfunc)(uint8_t, cpustate_t *);
+    void (*timerfunc)(int, cpustate_t *);
 } cpulocal_t;
-
-extern LIST_TYPE(cpulocal_t *) cpulocals;
 
 cpulocal_t *cpu_current(void);
 void cpu_init(void);
+
+static inline uint64_t cpu_readcr0(void) {
+    uint64_t ret = 0;
+    asm volatile (
+        "mov %0, cr0"
+        : "=r" (ret)
+        : : "memory"
+    );
+    return ret;
+}
+
+static inline void cpu_writecr0(uint64_t val) {
+    asm volatile (
+        "mov cr0, %0"
+        : : "r" (val)
+        : "memory"
+    );
+}
+
+static inline uint64_t cpu_readcr1(void) {
+    uint64_t ret = 0;
+    asm volatile (
+        "mov %0, cr1"
+        : "=r" (ret)
+        : : "memory"
+    );
+    return ret;
+}
+
+static inline void cpu_writecr1(uint64_t val) {
+    asm volatile (
+        "mov cr1, %0"
+        : : "r" (val)
+        : "memory"
+    );
+}
 
 static inline uint64_t cpu_readcr2(void) {
     uint64_t ret = 0;
@@ -95,6 +129,24 @@ static inline uint64_t cpu_readcr3(void) {
 static inline void cpu_writecr3(uint64_t val) {
     asm volatile (
         "mov cr3, %0"
+        : : "r" (val)
+        : "memory"
+    );
+}
+
+static inline uint64_t cpu_readcr4(void) {
+    uint64_t ret = 0;
+    asm volatile (
+        "mov %0, cr4"
+        : "=r" (ret)
+        : : "memory"
+    );
+    return ret;
+}
+
+static inline void cpu_writecr4(uint64_t val) {
+    asm volatile (
+        "mov cr4, %0"
         : : "r" (val)
         : "memory"
     );
@@ -141,7 +193,7 @@ static inline void *cpu_getgsbase(void) {
     return (void *)rdmsr(0xc0000101);
 }
 
-static inline void *get_fs_base(void) {
+static inline void *cpu_getfsbase(void) {
     return (void *)rdmsr(0xc0000100);
 }
 
@@ -187,6 +239,27 @@ static inline void msr_write(uint32_t msr, uint64_t val) {
     );
 }
 
+static inline void cpu_wrxcr(uint32_t reg, uint64_t val) {
+    uint32_t a = val, d = val >> 32;
+    asm volatile ( "xsetbv" :: "a" (a), "d" (d), "c" (reg) : "memory" );
+}
+
+static inline void cpu_xsave(void *ctx) {
+    asm volatile ( "xsave [%0]" : : "r" (ctx), "a" (0xffffffff), "d" (0xffffffff) : "memory" );
+}
+
+static inline void cpu_xrstor(void *ctx) {
+    asm volatile ( "xrstor [%0]" : : "r" (ctx), "a" (0xffffffff), "d" (0xffffffff) : "memory" );
+}
+
+static inline void cpu_fxsave(void *ctx) {
+    asm volatile ( "fxsave [%0]" : : "r" (ctx) : "memory" );
+}
+
+static inline void cpu_fxrstor(void *ctx) {
+    asm volatile ( "fxrstor [%0]" : : "r" (ctx) : "memory" );
+}
+
 static inline int cpu_toggleint(int state) {
     int ret = cpu_intstate();
     if(state) cpu_enableints();
@@ -194,9 +267,30 @@ static inline int cpu_toggleint(int state) {
     return ret;
 }
 
+#define CPUID_XSAVE (uint32_t)(1 << 26)
+#define CPUID_AVX (uint32_t)(1 << 28)
+#define CPUID_AVX512 (uint32_t)(1 << 16)
+
 extern uint64_t fpu_storesize;
 // for changing between xsave and (legacy) fxsave
 extern void (*fpu_save)(void *);
 extern void (*fpu_restore)(void *);
+
+static inline int cpuid(uint32_t leaf, uint32_t subleaf, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx) {
+    uint32_t cpuidmax = 0;
+    asm volatile (
+        "cpuid"
+        : "=a" (cpuidmax)
+        : "a" (leaf & 0x80000000)
+        : "rbx", "rcx", "rdx"
+    );
+    if(leaf > cpuidmax) return 0;
+    asm volatile (
+        "cpuid"
+        : "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx)
+        : "a" (leaf), "c" (subleaf)
+    );
+    return 1;
+}
 
 #endif

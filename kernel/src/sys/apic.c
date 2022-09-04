@@ -31,6 +31,7 @@ void lapic_calibratetimer(cpulocal_t *local) {
 
     lapic_write(LAPIC_REGLVTTIMER, (1 << 16) | 0xff);
     lapic_write(LAPIC_REGTIMERDIV, 0);
+    pit_setreload(0xffff);
 
     uint64_t tick = pit_curcount();
 

@@ -60,9 +60,9 @@ void termprint(const char *string, uint64_t len) {
     termreq.response->write(termreq.response->terminals[0], string, len);
 }
 
-static void ap_entry(struct limine_smp_info *info) {
-    printf("woah\n");
-    while(1) asm("pause");
+void kmainthread(void) {
+    printf("A\n");
+    for(;;) asm("hlt");
 }
 
 void _start(void) {

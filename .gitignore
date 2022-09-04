@@ -9,6 +9,11 @@ limine/**
 ovmf-x64/
 ovmf-x64/**
 
+kernel/src/proc/
+kernel/src/proc/**
+kernel/src/include/proc/
+kernel/src/include/proc/**
+
 kernel/.ccls-cache
 kernel/.ccls-cache/**
 
