@@ -55,7 +55,7 @@ void smp_initcpu(struct limine_smp_info *info) {
     // msr_write(0xc0000081, 0x0033002800000000); // set up the funny
 
     // msr_write(0xc0000082, syscall_entry);
-    // msr_write(0xc0000084, (uint64_t)(~(uint64_t)0x002));
+    // msr_write(0xc0000084, (uint64_t)(~((uint64_t)0x002)));
 
     // enable PAT
     uint64_t pat = msr_read(0x277);
@@ -63,7 +63,7 @@ void smp_initcpu(struct limine_smp_info *info) {
     pat |= (uint64_t)0x0105 << 32;
     msr_write(0x277, pat);
 
-    // enable SSE
+    // enable SSE and SSE2 so we can anable SIMD (Single Instruction Multiple Data)
     uint64_t cr0 = cpu_readcr0();
     cr0 &= ~(1 << 2);
     cr0 |= (1 << 1);
@@ -128,6 +128,8 @@ void smp_initcpu(struct limine_smp_info *info) {
     // lapic_calibratetimer(local);
     printf("[smp]: Processor #%d online\n", cpunum);
 
+    // setting a cpu's state for rip will redirect where it needs to go
+
     cpucount++;
     if(cpunum != 0) for(;;) asm("hlt"); // wait until we're given a task (cpu 0 will fallback since it still has to initialise the main loop)
 }
@@ -156,5 +158,5 @@ void smp_init(struct limine_smp_response *smp) {
     }
 
     while(cpucount != smp->cpu_count) asm("pause"); // await all starting
-    printf("[smp]: SMP initialised on %d processors\n", cpucount);
+    printf("[smp]: SMP initialised on all %d processors\n", cpucount);
 }
