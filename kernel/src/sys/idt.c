@@ -89,6 +89,7 @@ static void exce_handler(uint32_t vec, cpustate_t *state) {
         printf("userland exception\n");
     } else {
         printf("kernel exception %s\n", excenames[vec]);
+        cpu_disableints();
         for(;;) asm("hlt");
     }
 }

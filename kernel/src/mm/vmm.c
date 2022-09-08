@@ -54,7 +54,7 @@ uintptr_t vmm_virtphys(pagemap_t *pagemap, uintptr_t virt) {
 
 void vmm_switchto(pagemap_t *pagemap) {
     uint64_t *top = pagemap->top;
-
+    
     asm volatile (
         "mov cr3, %0"
         : : "r" (top)

@@ -43,9 +43,9 @@ void termprint(const char *str, uint64_t len);
 static void _putchar(char character) {
 #ifndef HARDWARE
     uint64_t cr3 = cpu_readcr3();
-    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top - HIGHER_HALF) vmm_switchto(kernelpagemap); 
+    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top) vmm_switchto(kernelpagemap); 
     termprint(&character, 1);
-    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top - HIGHER_HALF) {
+    if(vmm_initialised && cr3 != (uint64_t)kernelpagemap->top) {
         cpu_writecr3(cr3);
     }
 #endif
@@ -583,9 +583,6 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// void klock__Lock_acquire(void *);
-// void klock__Lock_release(void *);
-// extern char printf_lock;
 
 #include <lib/lock.h>
 

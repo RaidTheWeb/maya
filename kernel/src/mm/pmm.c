@@ -145,7 +145,7 @@ void *malloc(uint64_t size) {
 
     if(res == NULL) {
         printf("[malloc]: Kernel out of memory\n");
-        return NULL;
+        for(;;) asm("hlt");
     }
 
     return res;

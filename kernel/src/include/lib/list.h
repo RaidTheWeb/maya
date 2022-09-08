@@ -46,9 +46,9 @@
 
 #define LIST_INSERT(LIST, IDX, VALUE) do { \
     __auto_type LIST_INSERT_list = LIST; \
-    size_t LIST_INSERT_index = IDX; \
+    uint64_t LIST_INSERT_index = IDX; \
     LIST_ENSURE_LENGTH(LIST, LIST_INSERT_list>length); \
-    for (size_t LIST_INSERT_i = LIST_INSERT_list->length; LIST_INSERT_i > LIST_INSERT_index; LIST_INSERT_i--) { \
+    for (uint64_t LIST_INSERT_i = LIST_INSERT_list->length; LIST_INSERT_i > LIST_INSERT_index; LIST_INSERT_i--) { \
         LIST_INSERT_list->data[LIST_INSERT_i] = LIST_INSERT_list->data[LIST_INSERT_i - 1]; \
     } \
     LIST_INSERT_list->length++; \
@@ -57,14 +57,14 @@
 
 #define LIST_REMOVE(LIST, IDX) do { \
     __auto_type LIST_REMOVE_list = LIST; \
-    for (size_t LIST_REMOVE_i = (IDX); LIST_REMOVE_i < LIST_REMOVE_list->length - 1; LIST_REMOVE_i++) { \
+    for (uint64_t LIST_REMOVE_i = (IDX); LIST_REMOVE_i < LIST_REMOVE_list->length - 1; LIST_REMOVE_i++) { \
         LIST_REMOVE_list->data[LIST_REMOVE_i] = LIST_REMOVE_list->data[LIST_REMOVE_i + 1]; \
     } \
     LIST_REMOVE_list->length--; \
 } while (0)
 
 #define LIST_ITEM(LIST, IDX) ({ \
-    size_t LIST_ITEM_idx = IDX; \
+    uint64_t LIST_ITEM_idx = IDX; \
     __auto_type LIST_ITEM_list = LIST; \
     __auto_type LIST_ITEM_result = (typeof(*LIST_ITEM_list->data))LIST_INVALID; \
     if (LIST_ITEM_idx < LIST_ITEM_list->length) { \
@@ -75,8 +75,8 @@
 
 #define LIST_FIND(LIST, VALUE) ({ \
     __auto_type LIST_FIND_list = LIST; \
-    ssize_t LIST_FIND_result = LIST_INVALID; \
-    for (size_t LIST_FIND_i = 0; LIST_FIND_i < LIST_FIND_list->length; LIST_FIND_i++) { \
+    int64_t LIST_FIND_result = LIST_INVALID; \
+    for (uint64_t LIST_FIND_i = 0; LIST_FIND_i < LIST_FIND_list->length; LIST_FIND_i++) { \
         if (LIST_FIND_list->data[LIST_FIND_i] == (VALUE)) { \
             LIST_FIND_result = LIST_FIND_i; \
             break; \
@@ -88,13 +88,13 @@
 #define LIST_REMOVE_BY_VALUE(LIST, VALUE) do { \
     __auto_type LIST_REMOVE_BY_VALUE_list = LIST; \
     __auto_type LIST_REMOVE_BY_VALUE_v = VALUE; \
-    size_t LIST_REMOVE_BY_VALUE_i = LIST_FIND(LIST_REMOVE_BY_VALUE_list, LIST_REMOVE_BY_VALUE_v); \
+    uint64_t LIST_REMOVE_BY_VALUE_i = LIST_FIND(LIST_REMOVE_BY_VALUE_list, LIST_REMOVE_BY_VALUE_v); \
     LIST_REMOVE(LIST_REMOVE_BY_VALUE_list, LIST_REMOVE_BY_VALUE_i); \
 } while (0)
 
 #define LIST_FOR_EACH(LIST, BINDING, ...) do { \
     __auto_type LIST_FOR_EACH_list = LIST; \
-    for (size_t LIST_FOR_EACH_i = 0; LIST_FOR_EACH_i < LIST_FOR_EACH_list->length; LIST_FOR_EACH_i++) { \
+    for (uint64_t LIST_FOR_EACH_i = 0; LIST_FOR_EACH_i < LIST_FOR_EACH_list->length; LIST_FOR_EACH_i++) { \
         __auto_type BINDING = &LIST_FOR_EACH_list->data[LIST_FOR_EACH_i]; \
         __VA_ARGS__ \
     } \

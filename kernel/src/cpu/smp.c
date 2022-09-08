@@ -8,7 +8,7 @@
 #include <mm/vmm.h>
 #include <lib/stdio.h>
 #include <sys/apic.h>
-#include <proc/proc.h>
+#include <sched/sched.h>
 
 #define CPUSTACK 0x10000
 
@@ -22,6 +22,7 @@ void smp_initcpu(struct limine_smp_info *info) {
     cpulocal_t *local = (cpulocal_t *)info->extra_argument;
     int cpunum = local->cpunum;
 
+    printf("lapic id: %d\n", info->lapic_id);
     local->lapicid = info->lapic_id;
 
     gdt_reload();
@@ -32,6 +33,8 @@ void smp_initcpu(struct limine_smp_info *info) {
     vmm_switchto(kernelpagemap);
 
     cpu_setgsbase(local);
+    local->lastrunqueue = 0;
+    local->curthread = NULL;
 
     uint64_t *intstackphys = pmm_alloc(CPUSTACK / PAGE_SIZE); // allocate pages for stack (about 10)
     if(intstackphys == NULL) {
@@ -125,13 +128,16 @@ void smp_initcpu(struct limine_smp_info *info) {
 
     cpu_toggleint(1); // enable interrupts on this CPU
     
-    // lapic_calibratetimer(local);
+    lapic_calibratetimer(local);
     printf("[smp]: Processor #%d online\n", cpunum);
 
     // setting a cpu's state for rip will redirect where it needs to go
 
     cpucount++;
-    if(cpunum != 0) for(;;) asm("hlt"); // wait until we're given a task (cpu 0 will fallback since it still has to initialise the main loop)
+    if(cpunum != 0) {
+        while(sched_vec == 0) asm("pause"); // wait until scheduler has initialised
+        sched_await(); // wait until we're given a task (cpu 0 will fallback since it still has to initialise the main loop)
+    }
 }
 
 // CPU 0 is tasked with the bulk of the work during early initialsation
@@ -144,6 +150,9 @@ void smp_init(struct limine_smp_response *smp) {
 
     for(uint64_t i = 0; i < smp->cpu_count; i++) {
         cpulocal_t *local = malloc(sizeof(cpulocal_t));
+        LIST_PUSHBACK(&cpulocals, local);
+
+        printf("crazy: %d\n", LIST_ITEM(&cpulocals, 0)->lapicid);
 
         smp->cpus[i]->extra_argument = (uint64_t)local;
         local->cpunum = i;

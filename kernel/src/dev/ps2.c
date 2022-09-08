@@ -3,6 +3,8 @@
 #include <sys/apic.h>
 #include <lib/io.h>
 #include <lib/stdio.h>
+#include <mm/mm.h>
+#include <mm/vmm.h>
 
 static uint8_t ps2vec = 0;
 
@@ -27,7 +29,9 @@ void ps2_writecfg(uint8_t val) {
 }
 
 static void ps2_handler(uint32_t vec, cpustate_t *state) {
-    printf("ps2 interrupt on %d\n", ((cpulocal_t *)cpu_getgsbase())->cpunum);
+    (void)vec;
+    (void)state;
+    printf("ps2 interrupt on %d with %d\n", ((cpulocal_t *)cpu_getgsbase())->cpunum, vec);
     lapic_eoi();
     uint8_t scancode = inb(0x60);
     printf("0x%08x ", scancode);
@@ -47,6 +51,7 @@ void ps2_init(void) {
 
     ps2vec = idt_allocvec();
     isr[ps2vec] = ps2_handler;
+    printf("setting up on %d\n", LIST_ITEM(&cpulocals, 0)->lapicid);
     ioapic_setirqredirect(0, ps2vec, 1, 1); // we just redirect with lapic id 0 as CPU 0 can do all the work (independant of SMP configuration)
 
     printf("[ps2]: PS/2 vector: %d\n", ps2vec);

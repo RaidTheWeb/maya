@@ -17,6 +17,7 @@
 #include <dev/ps2.h>
 #include <sys/pit.h>
 #include <cpu/smp.h>
+#include <sched/sched.h>
 
 static volatile struct limine_terminal_request termreq = {
     .id = LIMINE_TERMINAL_REQUEST,
@@ -61,15 +62,10 @@ void termprint(const char *string, uint64_t len) {
 }
 
 void kmainthread(uint64_t arg) {
-    printf("called via intercepted rip with argument 0x%x\n", arg);
-    for(;;) asm("hlt"); // halt or else we'll try return somewhere else
-}
+    ps2_init();
 
-// intercept stack frame and replace return address with that of a different function
-void grabframeandreplaceret(uint64_t rsp) { 
-    uint64_t *stack = (uint64_t *)rsp;
-    stack[-1] = (uint64_t)kmainthread; // redirect function return to another location 
-    asm volatile ( "mov rdi, 0x64" ); // give an argument to the function
+    printf("yes\n");
+    for(;;) asm("hlt");
 }
 
 void _start(void) {
@@ -103,12 +99,6 @@ void _start(void) {
 
     time_init(bootreq.response);
 
-    ps2_init();
-
-    char *buf = malloc(64);
-    memcpy(buf, "Hello World!", 13);
-    printf("%s\n", buf);
-
     // Scheduler notes:
     // Scheduling of threads is a requirement for maya to be able to make best use of available CPU cores (via SMP) to allow multiple things to run at any one time to allow things like background tasks (monitors, poll based device checks, etc.) and such.
     // CPU state can be ripped from stack when entering an IRQ (will be the LAPIC oneshot for the scheduler entry), as it pushes all the registers onto the stack as part of the state argument, rip is included within this state,
@@ -118,13 +108,10 @@ void _start(void) {
     // The scheduler will follow preemptive scheduling as I believe that it'd be a good idea to do so. The base timeslice should be something around 50ms~ to maximise thread share time without impacting user experience. Blocking I/O should be considered to the scheduler as a good time to preempt the task.
     // Working with multiple processors could be tackled with a TLB cache design to reduce memory accesses when switching pagemaps. (as mentioned here https://wiki.osdev.org/Multiprocessor_Scheduling)
 
+    sched_init();
 
-    // intercept stack frame (just experimenting with how a scheduler could be implemented)
-    asm volatile (
-        "mov rdi, rsp\n"
-        "call grabframeandreplaceret\n"
-    );
-
+    sched_newkthread(kmainthread, NULL, 1);
+    // sched_await();
     for(;;) asm("hlt");
 }
 

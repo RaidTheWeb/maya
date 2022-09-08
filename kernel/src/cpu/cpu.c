@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <cpu/cpu.h>
 #include <lib/stdio.h>
-#include <proc/proc.h>
+
+typeof(cpulocals) cpulocals = LIST_INIT;
 
 cpulocal_t *cpu_current(void) {
     if(cpu_intstate()) {

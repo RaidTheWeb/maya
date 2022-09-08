@@ -52,12 +52,15 @@ typedef struct __attribute__((packed)) {
 typedef struct {
     int cpunum;
     int active;
+    struct __cthread *curthread; // current thread
     int lastrunqueue;
     uint32_t lapicid;
     uint32_t lapicfreq;
     tss_t tss;
     void (*timerfunc)(int, cpustate_t *);
 } cpulocal_t;
+
+extern LIST_TYPE(cpulocal_t *) cpulocals;
 
 cpulocal_t *cpu_current(void);
 void cpu_init(void);
