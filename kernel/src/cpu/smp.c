@@ -21,8 +21,7 @@ void (*fpu_restore)(void *ctx) = NULL;
 void smp_initcpu(struct limine_smp_info *info) {
     cpulocal_t *local = (cpulocal_t *)info->extra_argument;
     int cpunum = local->cpunum;
-
-    printf("lapic id: %d\n", info->lapic_id);
+    local->aborted = 0;
     local->lapicid = info->lapic_id;
 
     gdt_reload();
@@ -32,7 +31,7 @@ void smp_initcpu(struct limine_smp_info *info) {
 
     vmm_switchto(kernelpagemap);
 
-    cpu_setgsbase(local);
+    cpu_setgsbase((uint64_t)local->cpunum);
     local->lastrunqueue = 0;
     local->curthread = NULL;
 
@@ -151,8 +150,6 @@ void smp_init(struct limine_smp_response *smp) {
     for(uint64_t i = 0; i < smp->cpu_count; i++) {
         cpulocal_t *local = malloc(sizeof(cpulocal_t));
         LIST_PUSHBACK(&cpulocals, local);
-
-        printf("crazy: %d\n", LIST_ITEM(&cpulocals, 0)->lapicid);
 
         smp->cpus[i]->extra_argument = (uint64_t)local;
         local->cpunum = i;

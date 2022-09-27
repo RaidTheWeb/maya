@@ -57,7 +57,7 @@ typedef struct {
     uint32_t lapicid;
     uint32_t lapicfreq;
     tss_t tss;
-    void (*timerfunc)(int, cpustate_t *);
+    int aborted;
 } cpulocal_t;
 
 extern LIST_TYPE(cpulocal_t *) cpulocals;

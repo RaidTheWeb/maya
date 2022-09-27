@@ -17,6 +17,7 @@
 #define ATAP 14
 #define ATAS 15
 
+extern uint8_t abortvec;
 extern void *isr[256];
 
 void idt_updateist(uint8_t vec, uint8_t flags);

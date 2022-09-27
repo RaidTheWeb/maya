@@ -12,5 +12,6 @@ cpulocal_t *cpu_current(void) {
         for(;;) asm("hlt");
     }
 
-    return cpu_getgsbase(); // grab the cpu information
+    cpulocal_t *local = LIST_ITEM(&cpulocals, (uint64_t)cpu_getgsbase());
+    return local;
 }

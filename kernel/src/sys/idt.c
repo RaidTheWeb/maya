@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <sys/idt.h>
 #include <lib/lock.h>
+#include <sys/panic.h>
 #include <lib/stdio.h>
 #include <cpu/cpu.h>
 #include <sys/apic.h>
@@ -42,6 +43,7 @@ static idtentry_t idt[256];
 static idtptr_t idtptr;
 extern void *int_thunks[];
 void *isr[256];
+uint8_t abortvec = 0;
 
 const char *excenames[] = {
     "Division By Zero",
@@ -88,10 +90,15 @@ static void exce_handler(uint32_t vec, cpustate_t *state) {
     if(state->cs == 0x43) {
         printf("userland exception\n");
     } else {
-        printf("kernel exception %s\n", excenames[vec]);
-        cpu_disableints();
-        for(;;) asm("hlt");
+        panic(state, excenames[vec]);
     }
+}
+
+static void abort_handler(uint32_t vec, cpustate_t *state) {
+    (void)vec;
+    (void)state;
+    cpu_current()->active = 0;
+    for(;;) asm("hlt");
 }
 
 static void idt_reghandler(uint8_t vec, void *handler, uint8_t flags) {
@@ -143,5 +150,10 @@ void idt_init(void) {
 
     printf("[idt/isr]: Registered handlers\n");
 
-    idt_reload(); 
+    idt_reload();
+
+    abortvec = idt_allocvec();
+    idt_reghandler(abortvec, int_thunks[abortvec], 0x8e);
+    idt_updateist(abortvec, 4);
+    isr[abortvec] = abort_handler;
 }

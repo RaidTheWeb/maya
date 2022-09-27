@@ -8,6 +8,7 @@
 #include <lib/lock.h>
 
 #define MAXQUEUEDTHREADS 65536
+#define KTHREADSTACKSIZE 0x40000
 
 typedef struct __cthread cthread_t;
 
@@ -32,7 +33,9 @@ extern uint8_t sched_vec;
 void sched_init(void);
 cthread_t *sched_newkthread(void *func, void *arg, int enqueue);
 void sched_await(void);
+void sched_yield(int save);
 int sched_enqueue(cthread_t *thread);
 int sched_dequeue(cthread_t *thread);
+void sched_dequeuedie(void);
 
 #endif

@@ -64,8 +64,13 @@ void termprint(const char *string, uint64_t len) {
 void kmainthread(uint64_t arg) {
     ps2_init();
 
+    cpu_disableints();
+    printf("Kernel main thread on CPU #%d (LAPID #%d)\n", cpu_current()->cpunum, cpu_current()->lapicid);
+    cpu_enableints();
     printf("yes\n");
+    // sched_dequeuedie();
     for(;;) asm("hlt");
+    // sched_yield(1);
 }
 
 void _start(void) {
@@ -97,6 +102,8 @@ void _start(void) {
 
     smp_init(smpreq.response); 
 
+    sched_init();
+
     time_init(bootreq.response);
 
     // Scheduler notes:
@@ -106,12 +113,10 @@ void _start(void) {
     // The thread state's rsp should point to a different location allocated directly with pmm_alloc() for the thread as not to cause any form of interference with the rest of the code (in the event of a stack overwrite of sorts)
     // Scheduler should run each thread on a timeslice, after setting up a thread to run a oneshot timer should be triggered so that the scheduler will reschedule the CPU after the timeslice has been completed, such that each thread gets to run for their own timeslice (timeslice should be allowed to be modified for cputime priority). Scheduling for now should just be a form of the Round Robin scheduling algorithm (https://wiki.osdev.org/Scheduling_Algorithms), some form of proper priority based algorithm can be considered in the future. 
     // The scheduler will follow preemptive scheduling as I believe that it'd be a good idea to do so. The base timeslice should be something around 50ms~ to maximise thread share time without impacting user experience. Blocking I/O should be considered to the scheduler as a good time to preempt the task.
-    // Working with multiple processors could be tackled with a TLB cache design to reduce memory accesses when switching pagemaps. (as mentioned here https://wiki.osdev.org/Multiprocessor_Scheduling)
-
-    sched_init();
+    // Working with multiple processors could be tackled with a TLB cache design to reduce memory accesses when switching pagemaps. (as mentioned here https://wiki.osdev.org/Multiprocessor_Scheduling) 
 
     sched_newkthread(kmainthread, NULL, 1);
-    // sched_await();
-    for(;;) asm("hlt");
+    sched_await();
+    // for(;;) asm("hlt");
 }
 

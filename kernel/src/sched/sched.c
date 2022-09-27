@@ -96,6 +96,8 @@ static void sched_entry(uint32_t vec, cpustate_t *state) {
 
     cpustate_t *newstate = &curthread->state;
 
+    printf("[sched]: Thread scheduled for CPU #%d\n", local->cpunum);
+
     // printf("spinning up\n");
     asm volatile (
         "mov rsp, %0\n"
@@ -136,12 +138,43 @@ void sched_init(void) {
 }
 
 void sched_await(void) {
-    cpu_toggleint(0);
-    printf("scheduler current CPU #%d\n", cpu_current()->cpunum); 
+    cpu_disableints();
     lapic_timeroneshot(cpu_current(), sched_vec, 20000); // schedule for future
-    cpu_toggleint(1);
-    printf("halting\n");
+    cpu_enableints();
     for(;;) asm("hlt"); // halt while still allowing our attention to be diverted to scheduling
+}
+
+void sched_yield(int save) {
+    cpu_disableints();
+
+    cthread_t *thread = cpu_current()->curthread;
+
+    if(save) spinlock_acquire(&thread->yieldawait);
+
+    lapic_sendipi(cpu_current()->lapicid, sched_vec);
+    cpu_enableints();
+
+    if(save) {
+        printf("acquiring lock\n");
+        spinlock_acquire(&thread->yieldawait);
+        spinlock_release(&thread->yieldawait);
+        printf("released lock\n");
+    } else {
+        for(;;) asm("hlt");
+    }
+}
+
+void sched_dequeuedie(void) {
+    cpu_disableints();
+
+    cthread_t *thread = cpu_current()->curthread;
+    sched_dequeue(thread);
+
+    LIST_FOR_EACH(&thread->stacks, it,
+        pmm_free(it, KTHREADSTACKSIZE / PAGE_SIZE);
+    );
+    free(thread->stacks.data);
+    sched_yield(0);
 }
 
 int sched_enqueue(cthread_t *thread) {
@@ -185,8 +218,6 @@ int sched_dequeue(cthread_t *thread) {
     spinlock_release(&sched_lock);
     return 0;
 }
-
-#define KTHREADSTACKSIZE 0x40000
 
 cthread_t *sched_newkthread(void *func, void *arg, int enqueue) {
     cthread_t *thread = malloc(sizeof(cthread_t));
